@@ -78,62 +78,71 @@ st.divider()
 # Prediction button
 if st.button("💰 Predict Selling Price", use_container_width=True):
 
-    new_car = pd.DataFrame({
-        "Year": [year],
-        "Present_Price": [present_price],
-        "Kms_Driven": [kms_driven],
-        "Fuel_Type": [fuel_type],
-        "Seller_Type": [seller_type],
-        "Transmission": [transmission],
-        "Owner": [owner]
-    })
+    # Input validation
+    if present_price <= 0:
+        st.error("Present Price must be greater than 0.")
 
-    # Feature columns
-    numeric_cols = [
-        "Year",
-        "Present_Price",
-        "Kms_Driven",
-        "Owner"
-    ]
+    elif kms_driven < 0:
+        st.error("Kilometers Driven cannot be negative.")
 
-    categorical_cols = [
-        "Fuel_Type",
-        "Seller_Type",
-        "Transmission"
-    ]
+    elif owner < 0 or owner > 3:
+        st.error("Previous Owners must be between 0 and 3.")
 
-    # Numerical features
-    new_numeric = new_car[numeric_cols]
+    elif year > 2026:
+        st.error("Please enter a valid year.")
 
-    # Encode categorical features
-    new_encoded = encoder.transform(
-        new_car[categorical_cols]
-    )
+    else:
+        new_car = pd.DataFrame({
+            "Year": [year],
+            "Present_Price": [present_price],
+            "Kms_Driven": [kms_driven],
+            "Fuel_Type": [fuel_type],
+            "Seller_Type": [seller_type],
+            "Transmission": [transmission],
+            "Owner": [owner]
+        })
 
-    new_encoded_df = pd.DataFrame(
-        new_encoded,
-        columns=encoder.get_feature_names_out(categorical_cols)
-    )
+        numeric_cols = [
+            "Year",
+            "Present_Price",
+            "Kms_Driven",
+            "Owner"
+        ]
 
-    # Combine features
-    new_final = pd.concat(
-        [
-            new_numeric.reset_index(drop=True),
-            new_encoded_df
-        ],
-        axis=1
-    )
+        categorical_cols = [
+            "Fuel_Type",
+            "Seller_Type",
+            "Transmission"
+        ]
 
-    # Make prediction
-    prediction = model.predict(new_final)[0]
+        new_numeric = new_car[numeric_cols]
 
-    # Avoid negative price
-    prediction = max(0, prediction)
+        new_encoded = encoder.transform(
+            new_car[categorical_cols]
+        )
 
-    st.success(
-        f"### 💰 Estimated Selling Price: ₹{prediction:.2f} Lakh"
-    )
+        new_encoded_df = pd.DataFrame(
+            new_encoded,
+            columns=encoder.get_feature_names_out(
+                categorical_cols
+            )
+        )
 
+        new_final = pd.concat(
+            [
+                new_numeric.reset_index(drop=True),
+                new_encoded_df
+            ],
+            axis=1
+        )
+
+        prediction = model.predict(new_final)[0]
+
+        prediction = max(0, prediction)
+
+        st.success(
+            f"### 💰 Estimated Selling Price: ₹{prediction:.2f} Lakh"
+        )
 st.divider()
 
 st.caption(
